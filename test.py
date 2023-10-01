@@ -25,7 +25,7 @@ if not os.path.exists("./plots"):
     os.makedirs("./plots")
 
 # env = gym.make(env_name, render=True) # Good for testing
-env = gym.make(env_name)
+env = gym.make(env_name, render=True)
 
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
@@ -35,4 +35,4 @@ agent = TD3(state_dim, action_dim, max_action, batch_size=100, policy_freq=2,
             discount=0.99, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.1,
             noise_clip=0.5)
 
-stats = agent.train(env, max_timesteps=10e5)
+stats = agent.test(env, max_timesteps=5000)
