@@ -37,10 +37,12 @@ class TD3(object):
 
         self.max_action = max_action
 
-        self.critic.load_the_model()
+        # Capturing the return values to see later if the model was loaded successfully.
+        critic_model_loaded = self.critic.load_the_model()
         self.critic_target.load_the_model()
-        self.actor.load_the_model()
+        actor_model_loaded = self.actor.load_the_model()
         self.actor_target.load_the_model()
+
         self.batch_size = batch_size
         self.policy_freq = policy_freq
         self.discount = discount
@@ -49,7 +51,13 @@ class TD3(object):
         self.policy_noise = policy_noise
         self.expl_noise = expl_noise
         self.noise_clip = noise_clip
-        self.start_timesteps = start_timesteps
+
+        if critic_model_loaded and actor_model_loaded:
+            self.start_timesteps = 0
+            print(f"Model successfully loaded. Setting startup timesteps to 0")
+        else:
+            self.start_timesteps = start_timesteps
+            print(f"No model loaded. Setting startup timesteps to {start_timesteps}")
 
         print(f"Configured agent with device: {self.device}")
 

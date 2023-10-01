@@ -25,8 +25,10 @@ class Actor(nn.Module):
         try:
             self.load_state_dict(torch.load(weights_filename))
             print(f"Successfully loaded weights file {weights_filename}")
+            return True
         except:
             print(f"No weights file available at {weights_filename}")
+            return False
 
 
 class Critic(nn.Module):
@@ -76,6 +78,8 @@ class Critic(nn.Module):
         try:
             self.load_state_dict(torch.load(weights_filename))
             print(f"Successfully loaded weights file {weights_filename}")
+            return True
         except:
             print(f"No weights file available at {weights_filename}")
+            return False
 
