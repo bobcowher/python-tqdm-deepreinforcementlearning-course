@@ -12,7 +12,7 @@ import time
 class TD3(object):
 
     def __init__(self, state_dim, action_dim, max_action, batch_size, policy_freq, discount, tau=0.005, eval_freq=5e3,
-                 policy_noise=0.2, expl_noise=0.1, noise_clip=0.5, start_timesteps = 1e4, device=None):
+                 policy_noise=0.2, expl_noise=0.1, noise_clip=0.5, start_timesteps = 1e4, device=None, env_name=None):
         """
 
         :param state_dim:
@@ -38,10 +38,10 @@ class TD3(object):
         self.max_action = max_action
 
         # Capturing the return values to see later if the model was loaded successfully.
-        critic_model_loaded = self.critic.load_the_model()
-        self.critic_target.load_the_model()
-        actor_model_loaded = self.actor.load_the_model()
-        self.actor_target.load_the_model()
+        critic_model_loaded = self.critic.load_the_model(weights_filename=f"{env_name}_critic_latest.pt")
+        self.critic_target.load_the_model(weights_filename=f"{env_name}_critic_latest.pt")
+        actor_model_loaded = self.actor.load_the_model(weights_filename=f"{env_name}_actor_latest.pt")
+        self.actor_target.load_the_model(weights_filename=f"{env_name}_actor_latest.pt")
 
         self.batch_size = batch_size
         self.policy_freq = policy_freq
@@ -51,6 +51,7 @@ class TD3(object):
         self.policy_noise = policy_noise
         self.expl_noise = expl_noise
         self.noise_clip = noise_clip
+        self.env_name = env_name
 
         if critic_model_loaded and actor_model_loaded:
             self.start_timesteps = 0
@@ -265,5 +266,5 @@ class TD3(object):
             # Making a save method to save a trained model
 
     def save(self):
-        self.actor.save_the_model()
-        self.critic.save_the_model()
+        self.actor.save_the_model(weights_filename=f"{self.env_name}_actor_latest.pt")
+        self.critic.save_the_model(weights_filename=f"{self.env_name}_critic_latest.pt")

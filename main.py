@@ -15,7 +15,8 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 
-env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
+# env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
+env_name = "HumanoidBulletEnv-v0"
 
 if not os.path.exists("./results"):
     os.makedirs("./results")
@@ -31,8 +32,8 @@ state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
 max_action = float(env.action_space.high[0])
 
-agent = TD3(state_dim, action_dim, max_action, batch_size=100, policy_freq=2,
+agent = TD3(state_dim, action_dim, max_action, batch_size=100, policy_freq=10,
             discount=0.99, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.1,
-            noise_clip=0.5)
+            noise_clip=0.5, env_name=env_name)
 
-stats = agent.train(env, max_timesteps=10e5)
+stats = agent.train(env, max_timesteps=10e6)

@@ -17,11 +17,13 @@ class Actor(nn.Module):
         x = self.max_action * torch.tanh(self.layer_3(x))
         return x
 
-    def save_the_model(self, weights_filename='models/actor_latest.pt'):
+    def save_the_model(self, weights_filename='actor_latest.pt'):
+        weights_filename = "models/" + weights_filename
         # Take the default weights filename(latest.pt) and save it
         torch.save(self.state_dict(), weights_filename)
 
-    def load_the_model(self, weights_filename='models/actor_latest.pt'):
+    def load_the_model(self, weights_filename='actor_latest.pt'):
+        weights_filename = "models/" + weights_filename
         try:
             self.load_state_dict(torch.load(weights_filename))
             print(f"Successfully loaded weights file {weights_filename}")
@@ -70,11 +72,13 @@ class Critic(nn.Module):
         x1 = self.layer_3(x1)
         return x1
 
-    def save_the_model(self, weights_filename='models/critic_latest.pt'):
+    def save_the_model(self, weights_filename='critic_latest.pt'):
+        weights_filename = "models/" + weights_filename
         # Take the default weights filename(latest.pt) and save it
         torch.save(self.state_dict(), weights_filename)
 
-    def load_the_model(self, weights_filename='models/critic_latest.pt'):
+    def load_the_model(self, weights_filename='critic_latest.pt'):
+        weights_filename = "models/" + weights_filename
         try:
             self.load_state_dict(torch.load(weights_filename))
             print(f"Successfully loaded weights file {weights_filename}")
