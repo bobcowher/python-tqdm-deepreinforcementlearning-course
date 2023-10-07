@@ -7,12 +7,15 @@ import pybullet_envs
 import numpy as np
 from plot import LivePlot
 import time
+from torch.optim.lr_scheduler import StepLR
+
 
 
 class TD3(object):
 
-    def __init__(self, state_dim, action_dim, max_action, batch_size, policy_freq, discount, tau=0.005, eval_freq=5e3,
-                 policy_noise=0.2, expl_noise=0.1, noise_clip=0.5, start_timesteps = 1e4, device=None, env_name=None):
+    def __init__(self, state_dim, action_dim, max_action, batch_size, policy_freq, discount, tau=0.005, eval_freq=100,
+                 policy_noise=0.2, expl_noise=0.1, noise_clip=0.5, start_timesteps=1e4, device=None, env_name=None,
+                 replay_buffer_max_size=1000000, learning_rate=0.001):
         """
 
         :param state_dim:
@@ -27,13 +30,14 @@ class TD3(object):
         :param start_timesteps: Number of timesteps to take in warmup mode
         """
         self.device = device
+        self.learning_rate = learning_rate
         self.actor = Actor(state_dim, action_dim, max_action).to(self.device)
         self.actor_target = Actor(state_dim, action_dim, max_action).to(self.device)
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters())
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.learning_rate)
 
         self.critic = Critic(state_dim, action_dim).to(self.device)
         self.critic_target = Critic(state_dim, action_dim).to(self.device)
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters())
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.learning_rate)
 
         self.max_action = max_action
 
@@ -52,6 +56,7 @@ class TD3(object):
         self.expl_noise = expl_noise
         self.noise_clip = noise_clip
         self.env_name = env_name
+        self.replay_buffer = ReplayBuffer(max_size=replay_buffer_max_size)
 
         if critic_model_loaded and actor_model_loaded:
             self.start_timesteps = 0
@@ -61,6 +66,11 @@ class TD3(object):
             print(f"No model loaded. Setting startup timesteps to {start_timesteps}")
 
         print(f"Configured agent with device: {self.device}")
+
+    def update_learning_rate(self, learning_rate):
+        self.learning_rate = learning_rate
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.learning_rate)
+        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.learning_rate)
 
     def select_action(self, state):
         state = torch.Tensor(state.reshape(1, -1)).to(self.device)
@@ -82,10 +92,7 @@ class TD3(object):
         print("---------------------------------------")
         return avg_reward
 
-    def train(self, env, max_timesteps):
-        stats = {'Returns': [], 'AvgReturns': []}
-
-        replay_buffer = ReplayBuffer()
+    def train(self, env, max_timesteps, stats, batch_identifier=0):
 
         evaluations = [self.evaluate_policy(env)]
 
@@ -103,16 +110,10 @@ class TD3(object):
             if done:
                 # If we are not at the very beginning, we start the training process of the model
                 if total_timesteps != 0:
-                    print("Total Timesteps: {} Episode Num: {} Reward: {}".format(total_timesteps, episode_num,
-                                                                                  episode_reward))
-                    self.learn(replay_buffer=replay_buffer, epochs=episode_timesteps)
+                    print("Total Timesteps: {} Episode Num: {} Reward: {} Learning Rate: {} Batch: {}".format(total_timesteps, episode_num,
+                                                                                  episode_reward, self.learning_rate, batch_identifier))
+                    self.learn(replay_buffer=self.replay_buffer, epochs=100)
                     stats['Returns'].append(episode_reward)
-
-                # We evaluate the episode and we save the policy
-                if timesteps_since_eval >= self.eval_freq:
-                    timesteps_since_eval %= self.eval_freq
-                    evaluations.append(self.evaluate_policy(env))
-                    self.save()
 
                 # When the training step is done, we reset the state of the environment
                 obs = env.reset()
@@ -129,6 +130,7 @@ class TD3(object):
                     average_returns = np.mean(stats['Returns'][-100:])
                     stats['AvgReturns'].append(average_returns)
                     plotter.update_plot(stats)
+                    self.save()
 
             # Before 10000 timesteps, we play random actions
             if total_timesteps < self.start_timesteps:
@@ -150,13 +152,16 @@ class TD3(object):
             episode_reward += reward
 
             # We store the new transition into the Experience Replay memory (ReplayBuffer)
-            replay_buffer.add((obs, new_obs, action, reward, done_bool))
+            self.replay_buffer.add((obs, new_obs, action, reward, done_bool))
 
             # We update the state, the episode timestep, the total timesteps, and the timesteps since the evaluation of the policy
             obs = new_obs
             episode_timesteps += 1
+
             total_timesteps += 1
             timesteps_since_eval += 1
+
+        return stats
 
     def test(self, env, max_timesteps):
 
@@ -189,6 +194,8 @@ class TD3(object):
 
 
             action = self.select_action(np.array(obs))
+            print(action.shape)
+            print(action)
             # If the explore_noise parameter is not 0, we add noise to the action and we clip it
             if self.expl_noise != 0:
                 action = (action + np.random.normal(0, self.expl_noise, size=env.action_space.shape[0])).clip(
@@ -264,6 +271,7 @@ class TD3(object):
                         target_param.data.copy_(self.tau * main_param.data + (1.0 - self.tau) * target_param.data)
 
             # Making a save method to save a trained model
+
 
     def save(self):
         self.actor.save_the_model(weights_filename=f"{self.env_name}_actor_latest.pt")

@@ -15,8 +15,8 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 
-# env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
-env_name = "HumanoidBulletEnv-v0"
+env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
+# env_name = "HumanoidBulletEnv-v0"
 
 if not os.path.exists("./results"):
     os.makedirs("./results")
@@ -27,6 +27,7 @@ if not os.path.exists("./plots"):
 
 # env = gym.make(env_name, render=True) # Good for testing
 env = gym.make(env_name, render=True)
+env.seed(0) # Pick a consistent starting point.
 
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]

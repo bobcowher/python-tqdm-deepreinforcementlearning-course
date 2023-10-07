@@ -5,14 +5,12 @@ class ReplayBuffer(object):
     def __init__(self, max_size=1000000):
         self.storage = []
         self.max_size = max_size
-        self.ptr = 0
 
     def add(self, transition):
-        if len(self.storage) >= self.max_size:
-            self.storage[int(self.ptr)] = transition
-            self.ptr = (
-                                   self.ptr + 1) % self.max_size  # This is a reset to set self.ptr back to 0 when it hits max size.
+        if len(self.storage) < self.max_size:
+            self.storage.append(transition)
         else:
+            self.storage.remove(self.storage[0])
             self.storage.append(transition)
 
     def sample(self, batch_size):
