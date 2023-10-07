@@ -15,7 +15,7 @@ class TD3(object):
 
     def __init__(self, state_dim, action_dim, max_action, batch_size, policy_freq, discount, tau=0.005, eval_freq=100,
                  policy_noise=0.2, expl_noise=0.1, noise_clip=0.5, start_timesteps=1e4, device=None, env_name=None,
-                 replay_buffer_max_size=1000000, learning_rate=0.001):
+                 replay_buffer_max_size=1000000, learning_rate=0.001, lr_decay_factor=1, min_learning_rate=0.000001, decay_step=1000):
         """
 
         :param state_dim:
@@ -31,6 +31,7 @@ class TD3(object):
         """
         self.device = device
         self.learning_rate = learning_rate
+        self.min_learning_rate = min_learning_rate
         self.actor = Actor(state_dim, action_dim, max_action).to(self.device)
         self.actor_target = Actor(state_dim, action_dim, max_action).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.learning_rate)
@@ -57,7 +58,11 @@ class TD3(object):
         self.noise_clip = noise_clip
         self.env_name = env_name
         self.replay_buffer = ReplayBuffer(max_size=replay_buffer_max_size)
+        self.decay_step = decay_step
+        self.lr_decay_factor = lr_decay_factor
+        self.initial_learning_rate = learning_rate
 
+        # self.start_timesteps = start_timesteps
         if critic_model_loaded and actor_model_loaded:
             self.start_timesteps = 0
             print(f"Model successfully loaded. Setting startup timesteps to 0")
@@ -67,10 +72,34 @@ class TD3(object):
 
         print(f"Configured agent with device: {self.device}")
 
-    def update_learning_rate(self, learning_rate):
-        self.learning_rate = learning_rate
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.learning_rate)
-        self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=self.learning_rate)
+    def adjust_learning_rate(self, total_timesteps):
+
+        """
+        Adjusts the learning rate based on the exponential decay formula.
+
+        The learning rate is decayed using the formula:
+            learning_rate = initial_learning_rate * (lr_decay_factor ** (total_timesteps / decay_step))
+
+        This ensures that as training progresses and total_timesteps increases,
+        the learning rate decreases exponentially based on the specified decay_factor
+        and decay_step values.
+
+        Attributes:
+            initial_learning_rate (float): The starting learning rate before any decay.
+            lr_decay_factor (float): Factor by which the learning rate is decayed, typically between 0 and 1.
+            decay_step (int): Specifies how often the decay should be applied relative to total_timesteps.
+            total_timesteps (int): Cumulative number of timesteps the agent has been trained on.
+        """
+        if self.learning_rate > self.min_learning_rate:
+            print(f"LR before adjustment: {self.learning_rate}")
+            self.learning_rate = self.initial_learning_rate * (self.lr_decay_factor ** (total_timesteps / self.decay_step))
+            print(f"LR after adjustment: {self.learning_rate}")
+
+            for param_group in self.critic_optimizer.param_groups:
+                param_group['lr'] = self.learning_rate
+
+            for param_group in self.actor_optimizer.param_groups:
+                param_group['lr'] = self.learning_rate
 
     def select_action(self, state):
         state = torch.Tensor(state.reshape(1, -1)).to(self.device)
@@ -102,16 +131,20 @@ class TD3(object):
         done = True
         t0 = time.time()
 
-        plotter = LivePlot()
+        plotter = LivePlot(file_prefix=self.env_name)
 
         while total_timesteps < max_timesteps:
+
+            if total_timesteps % self.decay_step == 0:
+                self.adjust_learning_rate(total_timesteps=total_timesteps)
 
             # If the episode is done
             if done:
                 # If we are not at the very beginning, we start the training process of the model
                 if total_timesteps != 0:
-                    print("Total Timesteps: {} Episode Num: {} Reward: {} Learning Rate: {} Batch: {}".format(total_timesteps, episode_num,
-                                                                                  episode_reward, self.learning_rate, batch_identifier))
+                    print(f"Total Timesteps: {total_timesteps} Episode Num: {episode_num} Reward: {episode_reward} "
+                          f"Learning Rate: {self.learning_rate:.10f} Batch: {batch_identifier}")
+
                     self.learn(replay_buffer=self.replay_buffer, epochs=100)
                     stats['Returns'].append(episode_reward)
 
@@ -165,6 +198,13 @@ class TD3(object):
 
     def test(self, env, max_timesteps):
 
+        print(f"Printing actor model")
+        self.actor.print_model()
+        print(f"Printing critic model")
+        self.actor.print_model()
+        # print(f"Sleeping for 30 seconds to view...")
+        # time.sleep(30)
+
         total_timesteps = 0
         episode_num = 0
         done = True
@@ -194,8 +234,7 @@ class TD3(object):
 
 
             action = self.select_action(np.array(obs))
-            print(action.shape)
-            print(action)
+
             # If the explore_noise parameter is not 0, we add noise to the action and we clip it
             if self.expl_noise != 0:
                 action = (action + np.random.normal(0, self.expl_noise, size=env.action_space.shape[0])).clip(
@@ -203,6 +242,7 @@ class TD3(object):
 
             # The agent performs the action in the environment, then reaches the next state and receives the reward
             new_obs, reward, done, _ = env.step(action)
+            print(f"Step reward was {reward}")
 
             # We check if the episode is done
             done_bool = 0 if episode_timesteps + 1 == env._max_episode_steps else float(done)

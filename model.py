@@ -38,6 +38,10 @@ class Actor(nn.Module):
             print(f"No weights file available at {weights_filename}")
             return False
 
+    def print_model(self):
+        for name, param in self.named_parameters():
+            print(name, param.data)
+
 
 class Critic(nn.Module):
 
@@ -109,4 +113,8 @@ class Critic(nn.Module):
         except:
             print(f"No weights file available at {weights_filename}")
             return False
+
+    def print_model(self):
+        for name, param in self.named_parameters():
+            print(name, param.data)
 

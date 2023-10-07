@@ -4,12 +4,12 @@ from datetime import datetime
 
 
 class LivePlot:
-    def __init__(self):
+    def __init__(self, file_prefix=None):
         self.fig, self.ax = plt.subplots()
         self.ax.set_xlabel("Epoch x 10")
         self.ax.set_ylabel("Returns")
         self.ax.set_title("Returns over Epochs")
-
+        self.file_prefix = file_prefix
         self.data = None
 
         self.epochs = 0
@@ -36,4 +36,5 @@ class LivePlot:
         current_date = datetime.now().strftime('%Y-%m-%d')
 
         # Save the plot to the plots directory with date appended
-        self.fig.savefig(f'plots/plot_{current_date}.png')
+        self.fig.savefig(f'plots/{self.file_prefix}_plot_{current_date}.png')
+

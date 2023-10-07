@@ -15,8 +15,8 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 
-env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
-# env_name = "HumanoidBulletEnv-v0"
+# env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
+env_name = "HumanoidBulletEnv-v0"
 
 if not os.path.exists("./results"):
     os.makedirs("./results")
@@ -35,14 +35,14 @@ max_action = float(env.action_space.high[0])
 
 stats = {'Returns': [], 'AvgReturns': []}
 
-learning_rate = 0.0001
+learning_rate = 0.002
 
 agent = TD3(state_dim, action_dim, max_action, batch_size=100, policy_freq=2,
-            discount=0.95, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.1,
-            noise_clip=0.5, start_timesteps=5e4, learning_rate=learning_rate, env_name=env_name)
+            discount=0.995, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.2,
+            noise_clip=0.5, start_timesteps=1e4, learning_rate=learning_rate, env_name=env_name, lr_decay_factor=0.9999)
 
 
-stats = agent.train(env, max_timesteps=5e7, stats=stats, batch_identifier=0)
+stats = agent.train(env, max_timesteps=10e6, stats=stats, batch_identifier=0)
 
 
 # for i in range(100):
