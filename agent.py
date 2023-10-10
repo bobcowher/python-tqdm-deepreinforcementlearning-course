@@ -5,9 +5,10 @@ import torch.nn.functional as F
 from replaybuffer import ReplayBuffer
 import pybullet_envs
 import numpy as np
-from plot import LivePlot
 import time
 from torch.optim.lr_scheduler import StepLR
+from torch.utils.tensorboard import SummaryWriter
+from datetime import datetime
 
 
 
@@ -15,7 +16,7 @@ class TD3(object):
 
     def __init__(self, state_dim, action_dim, max_action, batch_size, policy_freq, discount, tau=0.005, eval_freq=100,
                  policy_noise=0.2, expl_noise=0.1, noise_clip=0.5, start_timesteps=1e4, device=None, env_name=None,
-                 replay_buffer_max_size=1000000, learning_rate=0.001, lr_decay_factor=1, min_learning_rate=0.000001, decay_step=1000):
+                 replay_buffer_max_size=1000000, learning_rate=0.001, lr_decay_factor=1, min_learning_rate=0.00001, decay_step=1000):
         """
 
         :param state_dim:
@@ -125,13 +126,13 @@ class TD3(object):
 
         evaluations = [self.evaluate_policy(env)]
 
+        writer = SummaryWriter(log_dir=f"./tensorboard_logdir/{self.env_name}/{datetime.now().strftime('%Y-%m-%d')}")
+
         total_timesteps = 0
         timesteps_since_eval = 0
         episode_num = 0
         done = True
         t0 = time.time()
-
-        plotter = LivePlot(file_prefix=self.env_name)
 
         while total_timesteps < max_timesteps:
 
@@ -147,9 +148,15 @@ class TD3(object):
 
                     self.learn(replay_buffer=self.replay_buffer, epochs=100)
                     stats['Returns'].append(episode_reward)
+                    writer.add_scalar('Returns', episode_reward, total_timesteps)
+                    writer.add_scalar('Learning Rate', self.learning_rate, total_timesteps)
 
                 # When the training step is done, we reset the state of the environment
                 obs = env.reset()
+
+
+
+                writer.flush()
 
                 # Set the Done to False
                 done = False
@@ -162,7 +169,6 @@ class TD3(object):
                 if episode_num % 10 == 0:
                     average_returns = np.mean(stats['Returns'][-100:])
                     stats['AvgReturns'].append(average_returns)
-                    plotter.update_plot(stats)
                     self.save()
 
             # Before 10000 timesteps, we play random actions
@@ -194,6 +200,8 @@ class TD3(object):
             total_timesteps += 1
             timesteps_since_eval += 1
 
+
+
         return stats
 
     def test(self, env, max_timesteps):
@@ -210,10 +218,8 @@ class TD3(object):
         done = True
         t0 = time.time()
 
-        plotter = LivePlot()
-
         while total_timesteps < max_timesteps:
-            time.sleep(0.001) # Slow down enough to see the environment run.
+            time.sleep(0.1) # Slow down enough to see the environment run.
             # If the episode is done
             if done:
                 # If we are not at the very beginning, we start the training process of the model

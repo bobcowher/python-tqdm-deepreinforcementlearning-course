@@ -8,6 +8,8 @@ from replaybuffer import ReplayBuffer
 from agent import TD3
 from plot import LivePlot
 import pybullet_envs
+from model import Actor
+from model import Critic
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -35,11 +37,13 @@ max_action = float(env.action_space.high[0])
 
 stats = {'Returns': [], 'AvgReturns': []}
 
-learning_rate = 0.002
+# learning_rate = 0.003 # Starting LR with LR decay
+learning_rate = 0.00001 # Steadily learning
 
+locals()
 agent = TD3(state_dim, action_dim, max_action, batch_size=100, policy_freq=2,
-            discount=0.995, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.2,
-            noise_clip=0.5, start_timesteps=1e4, learning_rate=learning_rate, env_name=env_name, lr_decay_factor=0.9999)
+            discount=0.999, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.2,
+            noise_clip=0.5, start_timesteps=5e4, learning_rate=learning_rate, env_name=env_name, lr_decay_factor=0.99)
 
 
 stats = agent.train(env, max_timesteps=10e6, stats=stats, batch_identifier=0)

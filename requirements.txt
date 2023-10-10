@@ -3,3 +3,4 @@ matplotlib
 gym==0.24.1
 pybullet
 torch
+tensorboard
