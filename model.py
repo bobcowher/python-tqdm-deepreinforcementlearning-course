@@ -7,10 +7,10 @@ class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
         print(f"Initial state dimensions for the actor are: {state_dim}")
-        self.layer_1 = nn.Linear(state_dim, 600)
-        self.layer_2 = nn.Linear(600, 400)
-        self.layer_3 = nn.Linear(400, 300)
-        self.layer_4 = nn.Linear(300, action_dim)
+        self.layer_1 = nn.Linear(state_dim, 1200)
+        self.layer_2 = nn.Linear(1200, 800)
+        self.layer_3 = nn.Linear(800, 600)
+        self.layer_4 = nn.Linear(600, action_dim)
         self.dropout = nn.Dropout(0.5)
         self.max_action = max_action
 
