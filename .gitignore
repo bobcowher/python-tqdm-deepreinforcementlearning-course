@@ -1,0 +1,6 @@
+models
+plots
+results
+tensorboard_logdir
+.idea
+.ipynb_checkpoints

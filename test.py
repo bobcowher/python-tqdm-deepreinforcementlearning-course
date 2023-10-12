@@ -25,7 +25,7 @@ if not os.path.exists("./models"):
 if not os.path.exists("./plots"):
     os.makedirs("./plots")
 
-# env = gym.make(env_name, render=True) # Good for testing
+# env = gym.make(env_name, render=True ) # Good for testing
 env = gym.make(env_name, render=True)
 env.seed(0) # Pick a consistent starting point.
 

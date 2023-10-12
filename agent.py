@@ -148,8 +148,8 @@ class TD3(object):
 
                     self.learn(replay_buffer=self.replay_buffer, epochs=100)
                     stats['Returns'].append(episode_reward)
-                    writer.add_scalar('Returns', episode_reward, total_timesteps)
-                    writer.add_scalar('Learning Rate', self.learning_rate, total_timesteps)
+                    writer.add_scalar(f'{self.env_name} - Returns: {batch_identifier}', episode_reward, total_timesteps)
+                    writer.add_scalar(f'{self.env_name} - Learning Rate: {batch_identifier}', self.learning_rate, total_timesteps)
 
                 # When the training step is done, we reset the state of the environment
                 obs = env.reset()
@@ -173,6 +173,8 @@ class TD3(object):
 
             # Before 10000 timesteps, we play random actions
             if total_timesteps < self.start_timesteps:
+                action = env.action_space.sample()
+            elif 0 <= total_timesteps % 10000 <= 1000:
                 action = env.action_space.sample()
             else:  # After 10000 timesteps, we switch to the model
                 action = self.select_action(np.array(obs))
@@ -219,7 +221,7 @@ class TD3(object):
         t0 = time.time()
 
         while total_timesteps < max_timesteps:
-            time.sleep(0.1) # Slow down enough to see the environment run.
+            time.sleep(0.07) # Slow down enough to see the environment run.
             # If the episode is done
             if done:
                 # If we are not at the very beginning, we start the training process of the model
