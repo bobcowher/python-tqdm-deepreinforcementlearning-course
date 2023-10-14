@@ -39,7 +39,7 @@ class TD3(object):
 
         self.critic = Critic(state_dim, action_dim).to(self.device)
         self.critic_target = Critic(state_dim, action_dim).to(self.device)
-        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=self.learning_rate)
+        self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=0.001)
 
         self.max_action = max_action
 
@@ -136,8 +136,8 @@ class TD3(object):
 
         while total_timesteps < max_timesteps:
 
-            if total_timesteps % self.decay_step == 0:
-                self.adjust_learning_rate(total_timesteps=total_timesteps)
+            # if total_timesteps % self.decay_step == 0:
+            #     self.adjust_learning_rate(total_timesteps=total_timesteps)
 
             # If the episode is done
             if done:
@@ -146,7 +146,7 @@ class TD3(object):
                     print(f"Total Timesteps: {total_timesteps} Episode Num: {episode_num} Reward: {episode_reward} "
                           f"Learning Rate: {self.learning_rate:.10f} Batch: {batch_identifier}")
 
-                    self.learn(replay_buffer=self.replay_buffer, epochs=100)
+                    self.learn(replay_buffer=self.replay_buffer, epochs=10)
                     stats['Returns'].append(episode_reward)
                     writer.add_scalar(f'{self.env_name} - Returns: {batch_identifier}', episode_reward, total_timesteps)
                     writer.add_scalar(f'{self.env_name} - Learning Rate: {batch_identifier}', self.learning_rate, total_timesteps)
