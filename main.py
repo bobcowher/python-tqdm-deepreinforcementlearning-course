@@ -42,12 +42,12 @@ stats = {'Returns': [], 'AvgReturns': []}
 learning_rate = 0.0001
 
 locals()
-agent = TD3(state_dim, action_dim, max_action, batch_size=100, policy_freq=2,
-            discount=0.99, device=device, tau=0.005, policy_noise=0.1, expl_noise=0.2,
-            noise_clip=0.5, start_timesteps=1e5, learning_rate=learning_rate, env_name=env_name, lr_decay_factor=0.999)
+agent = TD3(state_dim, action_dim, max_action, batch_size=16, policy_freq=2,
+            discount=0.99, device=device, tau=0.005, policy_noise=0.2, expl_noise=0.1,
+            noise_clip=0.5, start_timesteps=1e4, learning_rate=learning_rate, env_name=env_name, lr_decay_factor=0.999)
 
 
-stats = agent.train(env, max_timesteps=10e6, stats=stats, batch_identifier=0)
+stats = agent.train(env, max_timesteps=2e7, stats=stats, batch_identifier=1)
 
 
 # for i in range(100):

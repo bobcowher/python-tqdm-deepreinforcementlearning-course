@@ -149,7 +149,7 @@ class TD3(object):
                     self.learn(replay_buffer=self.replay_buffer, epochs=10)
                     stats['Returns'].append(episode_reward)
                     writer.add_scalar(f'{self.env_name} - Returns: {batch_identifier}', episode_reward, total_timesteps)
-                    writer.add_scalar(f'{self.env_name} - Learning Rate: {batch_identifier}', self.learning_rate, total_timesteps)
+                    writer.add_scalar(f'{self.env_name} - Returns Per Step: {batch_identifier}', (episode_reward / episode_timesteps), total_timesteps)
 
                 # When the training step is done, we reset the state of the environment
                 obs = env.reset()
