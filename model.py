@@ -7,9 +7,9 @@ class Actor(nn.Module):
 
     def __init__(self, state_dim, action_dim, max_action):
         super(Actor, self).__init__()
-        self.layer_1 = nn.Linear(state_dim, 400)
-        self.layer_2 = nn.Linear(400, 300)
-        self.layer_3 = nn.Linear(300, action_dim)
+        self.layer_1 = nn.Linear(state_dim, 600)
+        self.layer_2 = nn.Linear(600, 400)
+        self.layer_3 = nn.Linear(400, action_dim)
         self.max_action = max_action
 
     def forward(self, x):
@@ -43,14 +43,14 @@ class Critic(nn.Module):
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
         # First Critic Network.
-        self.layer_1 = nn.Linear(state_dim + action_dim, 400)
-        self.layer_2 = nn.Linear(400, 300)
-        self.layer_3 = nn.Linear(300, 1)
+        self.layer_1 = nn.Linear(state_dim + action_dim, 600)
+        self.layer_2 = nn.Linear(600, 400)
+        self.layer_3 = nn.Linear(400, 1)
 
         # Second critic network
-        self.layer_4 = nn.Linear(state_dim + action_dim, 400)
-        self.layer_5 = nn.Linear(400, 300)
-        self.layer_6 = nn.Linear(300, 1)
+        self.layer_4 = nn.Linear(state_dim + action_dim, 600)
+        self.layer_5 = nn.Linear(600, 400)
+        self.layer_6 = nn.Linear(400, 1)
 
     def forward(self, x, u):
 

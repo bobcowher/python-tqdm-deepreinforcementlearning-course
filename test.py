@@ -15,8 +15,8 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 
-env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
-# env_name = "HumanoidBulletEnv-v0"
+# env_name = "AntBulletEnv-v0" # Name of a environment (set it to any Continous environment you want)
+env_name = "HumanoidBulletEnv-v0"
 
 if not os.path.exists("./results"):
     os.makedirs("./results")
